@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TVID - Video Creation Interface</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+        header {
+            background-color: #333;
+            color: #fff;
+            padding: 1rem;
+            text-align: center;
+        }
+        .container {
+            padding: 2rem;
+        }
+        .upload-section {
+            margin-bottom: 2rem;
+        }
+        .upload-section input {
+            display: block;
+            margin: 1rem 0;
+        }
+        .settings {
+            margin-bottom: 2rem;
+        }
+        .settings label {
+            display: block;
+            margin: 0.5rem 0;
+        }
+        .generate-btn {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            padding: 1rem;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .generate-btn:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>TVID - Video Creation Interface</h1>
+    </header>
+    <div class="container">
+        <div class="upload-section">
+            <h2>Upload Files</h2>
+            <label for="photo">Upload Photo:</label>
+            <input type="file" id="photo" accept="image/*">
+
+            <label for="audio">Upload Audio:</label>
+            <input type="file" id="audio" accept="audio/*">
+
+            <label for="lyrics">Upload Lyrics (Optional):</label>
+            <input type="file" id="lyrics" accept=".txt">
+        </div>
+
+        <div class="settings">
+            <h2>Settings</h2>
+            <label for="resolution">Resolution:</label>
+            <select id="resolution">
+                <option value="1920x1080">1920x1080 (Full HD)</option>
+                <option value="3840x2160">3840x2160 (4K)</option>
+                <option value="7680x4320">7680x4320 (8K)</option>
+            </select>
+
+            <label for="frameRate">Frame Rate:</label>
+            <input type="number" id="frameRate" value="30" min="1" max="120">
+
+            <label for="emotion">Emotion Mapping:</label>
+            <select id="emotion">
+                <option value="joyful">Joyful</option>
+                <option value="melancholic">Melancholic</option>
+                <option value="aggressive">Aggressive</option>
+                <option value="neutral">Neutral</option>
+            </select>
+        </div>
+
+        <button class="generate-btn" onclick="generateVideo()">Generate Video</button>
+    </div>
+
+    <script>
+        function generateVideo() {
+            const photo = document.getElementById('photo').files[0];
+            const audio = document.getElementById('audio').files[0];
+            const lyrics = document.getElementById('lyrics').files[0];
+            const resolution = document.getElementById('resolution').value;
+            const frameRate = document.getElementById('frameRate').value;
+            const emotion = document.getElementById('emotion').value;
+
+            if (!photo || !audio) {
+                alert('Please upload both a photo and an audio file.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('photo', photo);
+            formData.append('audio', audio);
+            if (lyrics) formData.append('lyrics', lyrics);
+            formData.append('resolution', resolution);
+            formData.append('frameRate', frameRate);
+            formData.append('emotion', emotion);
+
+            fetch('/generate-video', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('Video generated successfully! Download it from: ' + data.outputPath);
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while generating the video.');
+            });
+        }
+    </script>
+</body>
+</html>

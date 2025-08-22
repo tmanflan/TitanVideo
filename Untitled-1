@@ -1,0 +1,118 @@
+// SI Model for Video Generation and Effects
+class SyntheticIntelligence {
+public:
+    SyntheticIntelligence() {
+        LOG_INFO("SyntheticIntelligence initialized");
+    }
+
+    // Generate a video frame procedurally
+    cv::Mat generateFrame(int width, int height, double time) {
+        cv::Mat frame(height, width, CV_8UC3, cv::Scalar(0, 0, 0));
+
+        // Example: Procedural pattern using sine waves
+        for (int y = 0; y < height; ++y) {
+            for (int x = 0; x < width; ++x) {
+                uchar value = static_cast<uchar>(
+                    (std::sin(x * 0.1 + time) + std::cos(y * 0.1 + time)) * 127 + 128);
+                frame.at<cv::Vec3b>(y, x) = cv::Vec3b(value, value, value);
+            }
+        }
+
+        return frame;
+    }
+
+    // Apply effects to a video frame
+    cv::Mat applyEffect(const cv::Mat& frame, const std::string& effect, const std::unordered_map<std::string, float>& params) {
+        cv::Mat result = frame.clone();
+
+        if (effect == "brightness") {
+            float brightness = params.at("value");
+            result += cv::Scalar(brightness, brightness, brightness);
+        } else if (effect == "contrast") {
+            float contrast = params.at("value");
+            result.convertTo(result, -1, contrast, 0);
+        } else if (effect == "blur") {
+            int kernelSize = static_cast<int>(params.at("kernelSize"));
+            cv::GaussianBlur(result, result, cv::Size(kernelSize, kernelSize), 0);
+        }
+
+        return result;
+    }
+};
+
+// Extend WebSocketServer to handle SI requests
+void WebSocketServer::handleGenerateVideo(const Json::Value& request, Json::Value& response) {
+    int width = request["params"].get("width", 1920).asInt();
+    int height = request["params"].get("height", 1080).asInt();
+    double duration = request["params"].get("duration", 5.0).asDouble();
+    double frameRate = request["params"].get("frameRate", 30.0).asDouble();
+
+    SyntheticIntelligence si;
+    std::string outputPath = "generated_video.avi";
+    cv::VideoWriter writer(outputPath, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), frameRate, cv::Size(width, height));
+
+    if (!writer.isOpened()) {
+        response["status"] = "error";
+        response["error"] = "Failed to open video writer";
+        return;
+    }
+
+    for (int frameNumber = 0; frameNumber < duration * frameRate; ++frameNumber) {
+        double time = frameNumber / frameRate;
+        cv::Mat frame = si.generateFrame(width, height, time);
+        writer.write(frame);
+    }
+
+    writer.release();
+
+    response["status"] = "success";
+    response["data"]["outputPath"] = outputPath;
+}
+
+void WebSocketServer::handleApplyEffect(const Json::Value& request, Json::Value& response) {
+    std::string inputPath = request["params"].get("inputPath", "").asString();
+    std::string outputPath = request["params"].get("outputPath", "output_effect.avi").asString();
+    std::string effect = request["params"].get("effect", "").asString();
+
+    if (inputPath.empty() || effect.empty()) {
+        response["status"] = "error";
+        response["error"] = "Input path and effect are required";
+        return;
+    }
+
+    cv::VideoCapture capture(inputPath);
+    if (!capture.isOpened()) {
+        response["status"] = "error";
+        response["error"] = "Failed to open input video";
+        return;
+    }
+
+    int width = static_cast<int>(capture.get(cv::CAP_PROP_FRAME_WIDTH));
+    int height = static_cast<int>(capture.get(cv::CAP_PROP_FRAME_HEIGHT));
+    double frameRate = capture.get(cv::CAP_PROP_FPS);
+
+    cv::VideoWriter writer(outputPath, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), frameRate, cv::Size(width, height));
+    if (!writer.isOpened()) {
+        response["status"] = "error";
+        response["error"] = "Failed to open video writer";
+        return;
+    }
+
+    SyntheticIntelligence si;
+    cv::Mat frame;
+    while (capture.read(frame)) {
+        std::unordered_map<std::string, float> params;
+        for (const auto& key : request["params"]["effectParams"].getMemberNames()) {
+            params[key] = request["params"]["effectParams"].get(key, 0.0).asFloat();
+        }
+
+        cv::Mat processedFrame = si.applyEffect(frame, effect, params);
+        writer.write(processedFrame);
+    }
+
+    capture.release();
+    writer.release();
+
+    response["status"] = "success";
+    response["data"]["outputPath"] = outputPath;
+}
