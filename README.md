@@ -15,12 +15,58 @@ TitanVideo operates on a subscription model with 4 premium tiers:
 | **Platinum** | $29.99/mo | 500/month | 4K | ✅ |
 | **Diamond** | $49.99/mo | Unlimited | 8K | ✅ |
 
+### Lifetime Access Option 🎯
+For users seeking **permanent, unlimited access** without recurring fees:
+
+**🏆 Lifetime Enterprise Access: $999 (One-time payment)**
+- ✅ **Never expires** - permanent access
+- ✅ **All features unlocked** - including future updates
+- ✅ **No monthly fees** - pay once, use forever
+- ✅ **Priority support** - lifetime premium support
+- ✅ **Commercial license** - full commercial usage rights
+
+*Limited availability - contact sales@titanvideo.ai for lifetime access*
+
 ### Payment
 Scan the QR code to subscribe:
 
 ![Subscription QR Code](qrcode.png)
 
 **Payment Link:** https://titanvideo.ai/subscribe
+
+---
+
+## 👑 Lifetime Subscriber Installation
+
+Lifetime subscribers receive a **premium installer** with pre-activated enterprise license:
+
+### Building Lifetime Installer
+```bash
+# Quick build (auto-detects platform)
+./build_lifetime.sh
+
+# Or use platform-specific scripts:
+# Linux/macOS
+./build_lifetime_installer.sh
+
+# Windows
+build_lifetime_installer.bat
+```
+
+### Lifetime Installer Features
+- 🎯 **Pre-activated License** - No setup required
+- 📦 **Premium Branding** - Enhanced installer experience
+- 🎁 **Welcome Package** - Comprehensive setup guide
+- 🔧 **Auto Shortcuts** - Desktop and start menu integration
+- 📞 **Priority Support** - Direct support contact information
+
+### Distribution
+Lifetime installers are distributed via:
+- 📧 **Email delivery** after payment confirmation
+- 💾 **Secure download link** with unique access code
+- 📦 **Physical media** available for enterprise clients
+
+See [LIFETIME_SUBSCRIBER_README.md](LIFETIME_SUBSCRIBER_README.md) for detailed lifetime subscriber guide.
 
 ## ✨ Features
 
