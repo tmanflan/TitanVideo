@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TVID - Video Creation Interface</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+        header {
+            background-color: #333;
+            color: #fff;
+            padding: 1rem;
+            text-align: center;
+        }
+        .container {
+            padding: 2rem;
+        }
+        .upload-section {
+            margin-bottom: 2rem;
+        }
+        .upload-section input {
+            display: block;
+            margin: 1rem 0;
+        }
+        .settings {
+            margin-bottom: 2rem;
+        }
+        .settings label {
+            display: block;
+            margin: 0.5rem 0;
+        }
+        .generate-btn {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            padding: 1rem;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .generate-btn:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>TVID - Video Creation Interface</h1>
+    </header>
+    <div class="container">
+        <div class="upload-section">
+            <h2>Upload Files</h2>
+            <label for="photo">Upload Photo:</label>
+            <input type="file" id="photo" accept="image/*">
+
+            <label for="audio">Upload Audio:</label>
+            <input type="file" id="audio" accept="audio/*">
+
+            <label for="lyrics">Upload Lyrics (Optional):</label>
+            <input type="file" id="lyrics" accept=".txt">
+        </div>
+
+        <div class="settings">
+            <h2>Settings</h2>
+            <label for="resolution">Resolution:</label>
+            <select id="resolution">
+                <option value="1920x1080">1920x1080 (Full HD)</option>
+                <option value="3840x2160">3840x2160 (4K)</option>
+                <option value="7680x4320">7680x4320 (8K)</option>
+            </select>
+
+            <label for="frameRate">Frame Rate:</label>
+            <input type="number" id="frameRate" value="30" min="1" max="120">
+
+            <label for="emotion">Emotion Mapping:</label>
+            <select id="emotion">
+                <option value="joyful">Joyful</option>
+                <option value="melancholic">Melancholic</option>
+                <option value="aggressive">Aggressive</option>
+                <option value="neutral">Neutral</option>
+            </select>
+        </div>
+
+        <button class="generate-btn" onclick="generateVideo()">Generate Video</button>
+        
+        <h2>AI Video Generation</h2>
+        <button class="generate-btn" onclick="generateAIVideo()">Generate AI Video</button>
+        
+        <h2>Apply Effects</h2>
+        <input type="file" id="effectVideo" accept="video/*">
+        <select id="effectType">
+            <option value="brightness">Brightness</option>
+            <option value="contrast">Contrast</option>
+            <option value="blur">Blur</option>
+        </select>
+        <input type="number" id="effectValue" placeholder="Value" step="0.1">
+        <button class="generate-btn" onclick="applyEffect()">Apply Effect</button>
+    </div>
+
+    <script>
+        const ws = new WebSocket('ws://localhost:9002');
+        
+        ws.onopen = function(event) {
+            console.log('Connected to WebSocket');
+        };
+        
+        ws.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            console.log('Received:', data);
+            if (data.status === 'success') {
+                alert('Operation completed! Output: ' + data.data.outputPath);
+            } else {
+                alert('Error: ' + data.error);
+            }
+        };
+        
+        function sendRequest(command, params) {
+            const request = {
+                id: Date.now(),
+                command: command,
+                params: params
+            };
+            ws.send(JSON.stringify(request));
+        }
+        
+        function generateVideo() {
+            const photo = document.getElementById('photo').files[0];
+            const audio = document.getElementById('audio').files[0];
+            const lyrics = document.getElementById('lyrics').files[0];
+            const resolution = document.getElementById('resolution').value;
+            const frameRate = document.getElementById('frameRate').value;
+            const emotion = document.getElementById('emotion').value;
+
+            if (!photo || !audio) {
+                alert('Please upload both a photo and an audio file.');
+                return;
+            }
+
+            // For now, just send a generate_video command
+            sendRequest('generate_video', {
+                width: 1920,
+                height: 1080,
+                duration: 10,
+                frameRate: 30
+            });
+        }
+        
+        function generateAIVideo() {
+            const prompt = prompt('Enter a prompt for AI video generation:');
+            if (prompt) {
+                sendRequest('create_ai_video', {
+                    prompt: prompt,
+                    width: 1920,
+                    height: 1080
+                });
+            }
+        }
+        
+        function applyEffect() {
+            const video = document.getElementById('effectVideo').files[0];
+            const effect = document.getElementById('effectType').value;
+            const value = parseFloat(document.getElementById('effectValue').value);
+            
+            if (!video) {
+                alert('Please select a video file.');
+                return;
+            }
+            
+            // Assume video is uploaded to server, send path
+            sendRequest('apply_effect', {
+                inputPath: 'uploaded_video.avi', // Placeholder
+                outputPath: 'output_effect.avi',
+                effect: effect,
+                effectParams: { value: value }
+            });
+        }
+    </script>
+</body>
+</html>
