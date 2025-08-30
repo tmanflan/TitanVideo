@@ -467,12 +467,15 @@ Script:"""
 
 class TitanVideoApp:
     def __init__(self):
-        # Initialize license manager
+        # Initialize license manager FIRST
         self.license_manager = LicenseManager()
 
-        # Check license before proceeding
-        if not self.check_license():
+        # STRICT ENFORCEMENT: Exit immediately if no valid license
+        if not self.license_manager.enforce_license_or_exit():
             return
+
+        # Only proceed if license is valid
+        print("✅ License validated - initializing TitanVideo...")
 
         self.root = ctk.CTk()
         self.root.title("TitanVideo - Professional AI Music Video Creator")
@@ -502,6 +505,20 @@ class TitanVideoApp:
         self.setup_ui()
         self.initialize_generator()
 
+        # Start periodic license validation
+        self.start_license_monitoring()
+
+    def start_license_monitoring(self):
+        """Monitor license validity periodically"""
+        def check_license_periodically():
+            if not self.license_manager.enforce_license_or_exit():
+                return
+            # Check every 5 minutes
+            self.root.after(300000, check_license_periodically)
+
+        # Start monitoring after 1 minute
+        self.root.after(60000, check_license_periodically)
+
     def check_license(self):
         """Check license validity and show appropriate UI"""
         if not self.license_manager.current_license:
@@ -518,11 +535,30 @@ class TitanVideoApp:
             return True
 
     def show_license_activation(self):
-        """Show license activation dialog"""
+        """Show license activation dialog with STRICT no-refunds policy"""
         dialog = ctk.CTkToplevel()
-        dialog.title("Activate TitanVideo")
-        dialog.geometry("500x400")
+        dialog.title("Activate TitanVideo - NO REFUNDS POLICY")
+        dialog.geometry("600x500")
         dialog.configure(fg_color="#2B2B2B")
+
+        # NO REFUNDS WARNING - Prominent display
+        warning_frame = ctk.CTkFrame(dialog, fg_color="#FF4444", corner_radius=10)
+        warning_frame.pack(pady=10, padx=20, fill="x")
+
+        warning_label = ctk.CTkLabel(warning_frame,
+                                   text="⚠️  WARNING: ALL SALES ARE FINAL - NO REFUNDS ⚠️",
+                                   font=ctk.CTkFont(size=16, weight="bold"),
+                                   text_color="white")
+        warning_label.pack(pady=10)
+
+        refund_policy = ctk.CTkLabel(warning_frame,
+                                   text="By purchasing TitanVideo, you acknowledge that:\n"
+                                        "• All sales are final\n"
+                                        "• No refunds will be provided under any circumstances\n"
+                                        "• Make sure you understand the features before buying",
+                                   font=ctk.CTkFont(size=12),
+                                   text_color="white")
+        refund_policy.pack(pady=5)
 
         # Title
         title_label = ctk.CTkLabel(dialog, text="Welcome to TitanVideo!",
@@ -531,7 +567,8 @@ class TitanVideoApp:
 
         # Description
         desc_label = ctk.CTkLabel(dialog,
-                                text="Choose a plan to unlock AI-powered music video creation:",
+                                text="Choose a plan to unlock AI-powered music video creation.\n"
+                                     "Remember: No refunds once purchased.",
                                 font=ctk.CTkFont(size=14))
         desc_label.pack(pady=10)
 
@@ -565,12 +602,28 @@ class TitanVideoApp:
         return self.license_manager.current_license is not None
 
     def select_package(self, package_name, dialog):
-        """Handle package selection"""
+        """Handle package selection with no-refunds confirmation"""
         package_info = self.license_manager.packages[package_name]
+
+        # Show no-refunds confirmation dialog
+        confirm_msg = f"You are about to purchase the {package_info['name']} plan for ${package_info['price']}/month.\n\n" \
+                     f"⚠️  IMPORTANT REMINDER:\n" \
+                     f"• ALL SALES ARE FINAL\n" \
+                     f"• NO REFUNDS UNDER ANY CIRCUMSTANCES\n" \
+                     f"• Make sure you understand the features\n\n" \
+                     f"Do you want to proceed with the purchase?"
+
+        confirm = messagebox.askyesno("Confirm Purchase - NO REFUNDS",
+                                    confirm_msg,
+                                    icon="warning")
+
+        if not confirm:
+            return
 
         # In a real app, this would redirect to payment processor
         messagebox.showinfo("Package Selected",
                           f"You selected the {package_info['name']} plan for ${package_info['price']}/month.\n\n"
+                          "⚠️  REMEMBER: ALL SALES ARE FINAL - NO REFUNDS\n\n"
                           "In a production app, this would redirect you to our payment processor.")
 
         # For demo purposes, create a temporary license
@@ -578,17 +631,37 @@ class TitanVideoApp:
         dialog.destroy()
 
     def activate_license_key(self, dialog):
-        """Activate license with provided key"""
+        """Activate license with provided key - strict validation"""
         license_key = self.license_key_entry.get().strip()
         if not license_key:
             messagebox.showerror("Error", "Please enter a license key.")
             return
 
+        # Show no-refunds acknowledgment before activation
+        ack_msg = "⚠️  LICENSE ACTIVATION WARNING:\n\n" \
+                 "By activating this license, you acknowledge that:\n" \
+                 "• All sales are final\n" \
+                 "• No refunds will be provided\n" \
+                 "• You understand the subscription terms\n\n" \
+                 "Do you want to proceed?"
+
+        acknowledge = messagebox.askyesno("License Activation - NO REFUNDS",
+                                        ack_msg,
+                                        icon="warning")
+
+        if not acknowledge:
+            return
+
         if self.license_manager.activate_license(license_key):
-            messagebox.showinfo("Success", "License activated successfully!")
+            messagebox.showinfo("Success",
+                              "✅ License activated successfully!\n\n"
+                              "⚠️  REMEMBER: All sales are final - no refunds.")
             dialog.destroy()
         else:
-            messagebox.showerror("Error", "Invalid license key. Please try again.")
+            messagebox.showerror("Error",
+                               "❌ Invalid license key. Please try again.\n\n"
+                               "If you believe this is an error, contact support.\n"
+                               "⚠️  Remember: All sales are final - no refunds.")
 
     def create_demo_license(self, package_name):
         """Create a demo license for selected package"""
@@ -1088,11 +1161,19 @@ class TitanVideoApp:
         self.generation_thread.start()
     
     def generate_real_video(self):
-        """Real video generation process - NO SIMULATIONS"""
-        # License check
+        """Real video generation process - STRICT LICENSE ENFORCEMENT"""
+        # Multiple license checks for maximum security
+        if not self.license_manager.require_valid_license_for_operation("video generation"):
+            self.root.quit()  # Force application exit
+            return
+
         if not self.license_manager.has_feature("basic_video_generation"):
-            messagebox.showerror("License Required",
-                               "Video generation requires an active license. Please upgrade your plan.")
+            messagebox.showerror("License Required - NO REFUNDS",
+                               "🚫 Video generation requires an active TitanVideo license.\n\n"
+                               "⚠️  ALL SALES ARE FINAL - NO REFUNDS UNDER ANY CIRCUMSTANCES\n\n"
+                               "Purchase a subscription at: https://titanvideo.ai/pricing\n\n"
+                               "By using this software, you agree to our no-refunds policy.")
+            self.root.quit()  # Force application exit
             return
 
         # Check usage limits
@@ -1100,9 +1181,11 @@ class TitanVideoApp:
         remaining = self.license_manager.get_remaining_usage()
 
         if remaining['videos_remaining'] <= 0:
-            messagebox.showerror("Usage Limit Reached",
-                               f"You've reached your monthly limit of {limits['videos_per_month']} videos.\n"
-                               "Please upgrade your plan or wait for the next billing cycle.")
+            messagebox.showerror("Usage Limit Reached - NO REFUNDS",
+                               f"🚫 You've reached your monthly limit of {limits['videos_per_month']} videos.\n\n"
+                               "⚠️  ALL SALES ARE FINAL - NO REFUNDS UNDER ANY CIRCUMSTANCES\n\n"
+                               "Upgrade your plan at: https://titanvideo.ai/pricing\n\n"
+                               "Or wait for the next billing cycle.")
             return
 
         try:
@@ -1309,14 +1392,51 @@ def main():
         except ImportError:
             missing_packages.append(package)
     
+def main():
+    """Main application entry point with strict license enforcement"""
+    print("🎬 Starting TitanVideo - Professional AI Music Video Creator")
+    print("=" * 60)
+
+    # Check dependencies first
+    missing_packages = []
+    try:
+        import customtkinter as ctk
+    except ImportError:
+        missing_packages.append("customtkinter")
+
+    try:
+        import torch
+    except ImportError:
+        missing_packages.append("torch")
+
+    try:
+        import librosa
+    except ImportError:
+        missing_packages.append("librosa")
+
+    try:
+        import cv2
+    except ImportError:
+        missing_packages.append("opencv-python")
+
     if missing_packages:
         print(f"❌ Missing packages: {', '.join(missing_packages)}")
         print("📦 Install with: pip install " + " ".join(missing_packages))
         return
-    
+
     print("✅ All dependencies found")
-    print("🎬 Launching Titan Video...")
-    
+
+    # STRICT LICENSE ENFORCEMENT AT STARTUP
+    print("🔐 Checking license...")
+    temp_license_manager = LicenseManager()
+
+    if not temp_license_manager.enforce_license_or_exit():
+        return
+
+    print("✅ License validated - launching TitanVideo...")
+    print("⚠️  REMEMBER: All sales are final - no refunds")
+    print("=" * 60)
+
     # Create and run the application
     app = TitanVideoApp()
     app.run()

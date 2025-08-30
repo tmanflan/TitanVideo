@@ -1,6 +1,7 @@
 """
 TitanVideo Licensing System
 Manages different subscription tiers and feature access
+STRICT ENFORCEMENT: No usage without valid license, no refunds policy
 """
 
 import json
@@ -10,6 +11,7 @@ import platform
 from datetime import datetime, timedelta
 import requests
 from typing import Dict, List, Optional
+import sys
 
 class LicenseManager:
     def __init__(self):
@@ -17,6 +19,17 @@ class LicenseManager:
         self.machine_id = self._get_machine_id()
         self.packages = self._load_packages()
         self.current_license = self._load_license()
+        self._enforce_no_refunds_policy()
+
+    def _enforce_no_refunds_policy(self):
+        """Display and enforce no refunds policy"""
+        print("=" * 60)
+        print("⚠️  TITANVIDEO NO REFUNDS POLICY ⚠️")
+        print("=" * 60)
+        print("ALL SALES ARE FINAL. NO REFUNDS UNDER ANY CIRCUMSTANCES.")
+        print("By using TitanVideo, you agree to our no-refunds policy.")
+        print("Make sure you understand the features before purchasing.")
+        print("=" * 60)
 
     def _get_machine_id(self) -> str:
         """Generate unique machine identifier"""
@@ -121,6 +134,98 @@ class LicenseManager:
         except Exception as e:
             print(f"Error loading license: {e}")
         return None
+
+    def enforce_license_or_exit(self) -> bool:
+        """Strict license enforcement - exit app if no valid license"""
+        if not self.current_license:
+            self._show_license_required_message()
+            print("❌ APPLICATION TERMINATED: Valid license required")
+            print("💳 Purchase a subscription at: https://titanvideo.ai/pricing")
+            print("⚠️  REMEMBER: ALL SALES ARE FINAL - NO REFUNDS")
+            sys.exit(1)
+            return False
+
+        if self.is_expired():
+            self._show_license_expired_message()
+            print("❌ APPLICATION TERMINATED: License expired")
+            print("💳 Renew your subscription at: https://titanvideo.ai/pricing")
+            print("⚠️  REMEMBER: ALL SALES ARE FINAL - NO REFUNDS")
+            sys.exit(1)
+            return False
+
+        # Additional validation
+        if not self._validate_license_integrity():
+            self._show_license_invalid_message()
+            print("❌ APPLICATION TERMINATED: License validation failed")
+            print("💳 Contact support at: support@titanvideo.ai")
+            print("⚠️  REMEMBER: ALL SALES ARE FINAL - NO REFUNDS")
+            sys.exit(1)
+            return False
+
+        return True
+
+    def _show_license_required_message(self):
+        """Display license required message"""
+        print("\n" + "=" * 60)
+        print("🚫 LICENSE REQUIRED - ACCESS DENIED 🚫")
+        print("=" * 60)
+        print("TitanVideo requires a valid subscription to operate.")
+        print("This is a professional AI-powered application.")
+        print()
+        print("📋 Available Plans:")
+        for pkg_name, pkg_info in self.packages.items():
+            print(f"   • {pkg_info['name']}: ${pkg_info['price']}/month")
+        print()
+        print("💳 Purchase: https://titanvideo.ai/pricing")
+        print("⚠️  IMPORTANT: ALL SALES ARE FINAL - NO REFUNDS")
+        print("=" * 60)
+
+    def _show_license_expired_message(self):
+        """Display license expired message"""
+        print("\n" + "=" * 60)
+        print("⏰ LICENSE EXPIRED - ACCESS DENIED ⏰")
+        print("=" * 60)
+        print("Your TitanVideo subscription has expired.")
+        print("Renew now to continue using the application.")
+        print()
+        print("💳 Renew: https://titanvideo.ai/pricing")
+        print("⚠️  IMPORTANT: ALL SALES ARE FINAL - NO REFUNDS")
+        print("=" * 60)
+
+    def _show_license_invalid_message(self):
+        """Display license invalid message"""
+        print("\n" + "=" * 60)
+        print("❌ INVALID LICENSE - ACCESS DENIED ❌")
+        print("=" * 60)
+        print("Your license could not be validated.")
+        print("This may be due to tampering or system changes.")
+        print()
+        print("💬 Support: support@titanvideo.ai")
+        print("💳 Repurchase: https://titanvideo.ai/pricing")
+        print("⚠️  IMPORTANT: ALL SALES ARE FINAL - NO REFUNDS")
+        print("=" * 60)
+
+    def _validate_license_integrity(self) -> bool:
+        """Additional license integrity checks"""
+        if not self.current_license:
+            return False
+
+        # Check for required fields
+        required_fields = ['package', 'machine_id', 'expiry', 'signature']
+        for field in required_fields:
+            if field not in self.current_license:
+                return False
+
+        # Verify signature
+        expected_signature = self._generate_signature(self.current_license)
+        if self.current_license.get('signature') != expected_signature:
+            return False
+
+        # Check if machine ID matches
+        if self.current_license.get('machine_id') != self.machine_id:
+            return False
+
+        return True
 
     def _validate_license(self, license_data: Dict) -> bool:
         """Validate license integrity and expiration"""
@@ -237,5 +342,24 @@ class LicenseManager:
         # Save updated license
         with open(self.license_file, 'w') as f:
             json.dump(self.current_license, f, indent=2)
+
+        return True
+
+    def require_valid_license_for_operation(self, operation_name: str = "this operation") -> bool:
+        """Check license validity before allowing any operation"""
+        if not self.current_license:
+            print(f"❌ OPERATION BLOCKED: {operation_name} requires a valid license")
+            self._show_license_required_message()
+            return False
+
+        if self.is_expired():
+            print(f"❌ OPERATION BLOCKED: {operation_name} - license expired")
+            self._show_license_expired_message()
+            return False
+
+        if not self._validate_license_integrity():
+            print(f"❌ OPERATION BLOCKED: {operation_name} - invalid license")
+            self._show_license_invalid_message()
+            return False
 
         return True
