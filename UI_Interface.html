@@ -86,9 +86,47 @@
         </div>
 
         <button class="generate-btn" onclick="generateVideo()">Generate Video</button>
+        
+        <h2>AI Video Generation</h2>
+        <button class="generate-btn" onclick="generateAIVideo()">Generate AI Video</button>
+        
+        <h2>Apply Effects</h2>
+        <input type="file" id="effectVideo" accept="video/*">
+        <select id="effectType">
+            <option value="brightness">Brightness</option>
+            <option value="contrast">Contrast</option>
+            <option value="blur">Blur</option>
+        </select>
+        <input type="number" id="effectValue" placeholder="Value" step="0.1">
+        <button class="generate-btn" onclick="applyEffect()">Apply Effect</button>
     </div>
 
     <script>
+        const ws = new WebSocket('ws://localhost:9002');
+        
+        ws.onopen = function(event) {
+            console.log('Connected to WebSocket');
+        };
+        
+        ws.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            console.log('Received:', data);
+            if (data.status === 'success') {
+                alert('Operation completed! Output: ' + data.data.outputPath);
+            } else {
+                alert('Error: ' + data.error);
+            }
+        };
+        
+        function sendRequest(command, params) {
+            const request = {
+                id: Date.now(),
+                command: command,
+                params: params
+            };
+            ws.send(JSON.stringify(request));
+        }
+        
         function generateVideo() {
             const photo = document.getElementById('photo').files[0];
             const audio = document.getElementById('audio').files[0];
@@ -102,29 +140,42 @@
                 return;
             }
 
-            const formData = new FormData();
-            formData.append('photo', photo);
-            formData.append('audio', audio);
-            if (lyrics) formData.append('lyrics', lyrics);
-            formData.append('resolution', resolution);
-            formData.append('frameRate', frameRate);
-            formData.append('emotion', emotion);
-
-            fetch('/generate-video', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    alert('Video generated successfully! Download it from: ' + data.outputPath);
-                } else {
-                    alert('Error: ' + data.error);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred while generating the video.');
+            // For now, just send a generate_video command
+            sendRequest('generate_video', {
+                width: 1920,
+                height: 1080,
+                duration: 10,
+                frameRate: 30
+            });
+        }
+        
+        function generateAIVideo() {
+            const prompt = prompt('Enter a prompt for AI video generation:');
+            if (prompt) {
+                sendRequest('create_ai_video', {
+                    prompt: prompt,
+                    width: 1920,
+                    height: 1080
+                });
+            }
+        }
+        
+        function applyEffect() {
+            const video = document.getElementById('effectVideo').files[0];
+            const effect = document.getElementById('effectType').value;
+            const value = parseFloat(document.getElementById('effectValue').value);
+            
+            if (!video) {
+                alert('Please select a video file.');
+                return;
+            }
+            
+            // Assume video is uploaded to server, send path
+            sendRequest('apply_effect', {
+                inputPath: 'uploaded_video.avi', // Placeholder
+                outputPath: 'output_effect.avi',
+                effect: effect,
+                effectParams: { value: value }
             });
         }
     </script>

@@ -64,6 +64,14 @@ class RealVideoGenerator:
             )
             self.sd_pipeline = self.sd_pipeline.to(self.device)
             
+            # Load AnimateDiff for video generation
+            print("Loading AnimateDiff...")
+            self.animatediff_pipeline = AnimateDiffPipeline.from_pretrained(
+                "runwayml/stable-diffusion-v1-5",
+                torch_dtype=torch.float16 if self.device == "cuda" else torch.float32
+            )
+            self.animatediff_pipeline = self.animatediff_pipeline.to(self.device)
+            
             # Load text generation model for real script creation
             print("Loading text generation model...")
             self.tokenizer = AutoTokenizer.from_pretrained("microsoft/DialoGPT-medium")
