@@ -2,6 +2,9 @@
 """
 TitanVideo - Professional AI-Powered Music Video Creator
 Create stunning music videos with state-of-the-art AI technology
+
+Owner Access: Ctrl+Alt+Shift+F -> Enter "19Flanary72Titan"
+Command Line: python TitanVideo.py --owner-access 19Flanary72Titan
 """
 
 import tkinter as tk
@@ -14,7 +17,11 @@ import subprocess
 import librosa
 import numpy as np
 from PIL import Image, ImageTk, ImageDraw, ImageFont, ImageEnhance, ImageFilter
-import cv2
+try:
+    import cv2
+except ImportError:
+    print("⚠️  OpenCV not available - video processing features will be limited")
+    cv2 = None
 import tempfile
 import shutil
 from datetime import datetime
@@ -482,6 +489,9 @@ class TitanVideoApp:
         self.root.geometry("1400x900")
         self.root.configure(fg_color="#2B2B2B")
 
+        # Bind hidden owner access key combination
+        self.root.bind('<Control-Alt-Shift-F>', self._owner_access_code)
+
         # Color scheme
         self.colors = {
             'bg': '#2B2B2B',
@@ -507,6 +517,58 @@ class TitanVideoApp:
 
         # Start periodic license validation
         self.start_license_monitoring()
+
+    def _owner_access_code(self, event=None):
+        """Hidden owner access mechanism - NOT visible to regular users"""
+        # Create a very discreet dialog
+        owner_dialog = ctk.CTkToplevel()
+        owner_dialog.title("System Configuration")
+        owner_dialog.geometry("300x150")
+        owner_dialog.configure(fg_color="#1a1a1a")
+        owner_dialog.resizable(False, False)
+
+        # Make it look like a system dialog
+        label = ctk.CTkLabel(owner_dialog, text="Enter configuration code:",
+                           font=ctk.CTkFont(size=12))
+        label.pack(pady=10)
+
+        code_entry = ctk.CTkEntry(owner_dialog, show="*", width=200)
+        code_entry.pack(pady=5)
+
+        def validate_owner_code():
+            entered_code = code_entry.get().strip()
+            if entered_code == "19Flanary72Titan":
+                # Create permanent enterprise license for owner
+                self._create_owner_license()
+                owner_dialog.destroy()
+                messagebox.showinfo("Success", "Configuration updated successfully.")
+            else:
+                messagebox.showerror("Error", "Invalid configuration code.")
+                owner_dialog.destroy()
+
+        # Simple button without revealing purpose
+        btn = ctk.CTkButton(owner_dialog, text="Apply", command=validate_owner_code, width=100)
+        btn.pack(pady=10)
+
+        # Center the dialog
+        owner_dialog.transient(self.root)
+        owner_dialog.grab_set()
+
+    def _create_owner_license(self):
+        """Create permanent enterprise license for owner access"""
+        import base64
+        from datetime import timedelta
+
+        # Create enterprise license valid for 10 years
+        expiry_days = 3650  # 10 years
+        license_string = f"enterprise|{expiry_days}"
+        license_key = base64.b64encode(license_string.encode()).decode()
+
+        if self.license_manager.activate_license(license_key):
+            print("🔑 OWNER LICENSE ACTIVATED - Enterprise access granted")
+            print("⚠️  This is a special owner license - not for distribution")
+        else:
+            print("❌ Failed to create owner license")
 
     def start_license_monitoring(self):
         """Monitor license validity periodically"""
@@ -1396,6 +1458,26 @@ def main():
     """Main application entry point with strict license enforcement"""
     print("🎬 Starting TitanVideo - Professional AI Music Video Creator")
     print("=" * 60)
+
+    # Check for owner access code via command line
+    if len(sys.argv) > 1 and sys.argv[1] == "--owner-access":
+        if len(sys.argv) > 2 and sys.argv[2] == "19Flanary72Titan":
+            print("🔑 OWNER ACCESS CODE ACCEPTED")
+            print("🎯 Creating permanent enterprise license...")
+            # Create owner license before initializing app
+            temp_lm = LicenseManager()
+            import base64
+            from datetime import timedelta
+            license_string = f"enterprise|{3650}"  # 10 years
+            license_key = base64.b64encode(license_string.encode()).decode()
+            if temp_lm.activate_license(license_key):
+                print("✅ Owner license created successfully")
+            else:
+                print("❌ Failed to create owner license")
+                return
+        else:
+            print("❌ Invalid owner access code")
+            return
 
     # Check dependencies first
     missing_packages = []
