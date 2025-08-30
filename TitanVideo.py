@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """
-Titan Video - REAL Music Video Generation App
-A professional music video generation application using actual open-source AI models
-NO SIMULATIONS - REAL VIDEO GENERATION ONLY
+TitanVideo - Professional AI-Powered Music Video Creator
+Create stunning music videos with state-of-the-art AI technology
 """
 
 import tkinter as tk
@@ -33,6 +32,7 @@ from scipy import signal
 import webrtcvad
 import wave
 import audioop
+from license_manager import LicenseManager
 
 # Set CustomTkinter appearance
 ctk.set_appearance_mode("dark")
@@ -467,11 +467,18 @@ Script:"""
 
 class TitanVideoApp:
     def __init__(self):
+        # Initialize license manager
+        self.license_manager = LicenseManager()
+
+        # Check license before proceeding
+        if not self.check_license():
+            return
+
         self.root = ctk.CTk()
-        self.root.title("Titan Video - Real Music Video Generator")
+        self.root.title("TitanVideo - Professional AI Music Video Creator")
         self.root.geometry("1400x900")
         self.root.configure(fg_color="#2B2B2B")
-        
+
         # Color scheme
         self.colors = {
             'bg': '#2B2B2B',
@@ -481,19 +488,132 @@ class TitanVideoApp:
             'accent_blue': '#4169E1',
             'accent_orange': '#FF8C00'
         }
-        
+
         # Initialize real video generator
         self.video_generator = None
         self.generation_thread = None
         self.current_output_path = None
-        
+
         self.video_styles = [
             "Cinematic", "Abstract", "Retro", "Futuristic",
             "Nature", "Urban", "Minimalist", "Psychedelic"
         ]
-        
+
         self.setup_ui()
         self.initialize_generator()
+
+    def check_license(self):
+        """Check license validity and show appropriate UI"""
+        if not self.license_manager.current_license:
+            # Show license activation dialog
+            return self.show_license_activation()
+        elif self.license_manager.is_expired():
+            messagebox.showerror("License Expired",
+                               "Your TitanVideo license has expired. Please renew to continue.")
+            return self.show_license_activation()
+        else:
+            # Valid license, show package info
+            package_info = self.license_manager.get_package_info()
+            self.show_package_info(package_info)
+            return True
+
+    def show_license_activation(self):
+        """Show license activation dialog"""
+        dialog = ctk.CTkToplevel()
+        dialog.title("Activate TitanVideo")
+        dialog.geometry("500x400")
+        dialog.configure(fg_color="#2B2B2B")
+
+        # Title
+        title_label = ctk.CTkLabel(dialog, text="Welcome to TitanVideo!",
+                                 font=ctk.CTkFont(size=24, weight="bold"))
+        title_label.pack(pady=20)
+
+        # Description
+        desc_label = ctk.CTkLabel(dialog,
+                                text="Choose a plan to unlock AI-powered music video creation:",
+                                font=ctk.CTkFont(size=14))
+        desc_label.pack(pady=10)
+
+        # Package buttons
+        packages = self.license_manager.packages
+
+        for package_name, package_info in packages.items():
+            btn_text = f"{package_info['name']}: ${package_info['price']}/month"
+            btn = ctk.CTkButton(dialog, text=btn_text,
+                              command=lambda p=package_name: self.select_package(p, dialog))
+            btn.pack(pady=5, padx=50, fill="x")
+
+        # Manual activation
+        manual_frame = ctk.CTkFrame(dialog, fg_color="transparent")
+        manual_frame.pack(pady=20, padx=20, fill="x")
+
+        manual_label = ctk.CTkLabel(manual_frame, text="Already have a license key?")
+        manual_label.pack()
+
+        self.license_key_entry = ctk.CTkEntry(manual_frame,
+                                            placeholder_text="Enter license key...")
+        self.license_key_entry.pack(pady=5, fill="x")
+
+        activate_btn = ctk.CTkButton(manual_frame, text="Activate License",
+                                   command=lambda: self.activate_license_key(dialog))
+        activate_btn.pack(pady=5)
+
+        # Wait for dialog to close
+        dialog.wait_window()
+
+        return self.license_manager.current_license is not None
+
+    def select_package(self, package_name, dialog):
+        """Handle package selection"""
+        package_info = self.license_manager.packages[package_name]
+
+        # In a real app, this would redirect to payment processor
+        messagebox.showinfo("Package Selected",
+                          f"You selected the {package_info['name']} plan for ${package_info['price']}/month.\n\n"
+                          "In a production app, this would redirect you to our payment processor.")
+
+        # For demo purposes, create a temporary license
+        self.create_demo_license(package_name)
+        dialog.destroy()
+
+    def activate_license_key(self, dialog):
+        """Activate license with provided key"""
+        license_key = self.license_key_entry.get().strip()
+        if not license_key:
+            messagebox.showerror("Error", "Please enter a license key.")
+            return
+
+        if self.license_manager.activate_license(license_key):
+            messagebox.showinfo("Success", "License activated successfully!")
+            dialog.destroy()
+        else:
+            messagebox.showerror("Error", "Invalid license key. Please try again.")
+
+    def create_demo_license(self, package_name):
+        """Create a demo license for selected package"""
+        import base64
+        from datetime import timedelta
+
+        # Create demo license valid for 14 days
+        expiry_days = 14
+        license_string = f"{package_name}|{expiry_days}"
+        license_key = base64.b64encode(license_string.encode()).decode()
+
+        self.license_manager.activate_license(license_key)
+
+    def show_package_info(self, package_info):
+        """Show current package information"""
+        limits = self.license_manager.get_limits()
+        remaining = self.license_manager.get_remaining_usage()
+
+        info_text = f"Current Plan: {package_info['name']}\n"
+        info_text += f"Videos remaining: {remaining['videos_remaining']}\n"
+        info_text += f"Max duration: {limits['max_duration']}s\n"
+        info_text += f"Max resolution: {limits['max_resolution']}"
+
+        # You could show this in a status bar or info panel
+        print(f"License Info: {info_text}")
     
     def initialize_generator(self):
         """Initialize real video generator in background"""
@@ -677,27 +797,55 @@ class TitanVideoApp:
         # Resolution
         res_frame = ctk.CTkFrame(settings_grid, fg_color="transparent")
         res_frame.pack(side="right", fill="both", expand=True)
-        
+
         ctk.CTkLabel(res_frame, text="Resolution:", text_color="white").pack(anchor="w")
+
+        # Set available resolutions based on license
+        available_resolutions = ["720p (1280x720)"]  # Basic always available
+
+        if self.license_manager.has_feature("high_resolution"):
+            available_resolutions.append("1080p (1920x1080)")
+
+        if self.license_manager.has_feature("ultra_high_resolution"):
+            available_resolutions.extend(["4K (3840x2160)", "8K (7680x4320)"])
+
         self.resolution = ctk.CTkComboBox(
             res_frame,
-            values=["1080p (1920x1080)", "720p (1280x720)"],
+            values=available_resolutions,
             fg_color=self.colors['accent_black'],
             border_color=self.colors['accent_orange']
         )
-        self.resolution.set("1080p (1920x1080)")
+
+        # Set default resolution based on license
+        if self.license_manager.has_feature("ultra_high_resolution"):
+            self.resolution.set("4K (3840x2160)")
+        elif self.license_manager.has_feature("high_resolution"):
+            self.resolution.set("1080p (1920x1080)")
+        else:
+            self.resolution.set("720p (1280x720)")
+
         self.resolution.pack(fill="x", pady=(5, 0))
-        
+
         # Marketing video option
         marketing_frame = ctk.CTkFrame(settings_frame, fg_color="transparent")
         marketing_frame.pack(fill="x", padx=20, pady=(10, 20))
-        
-        self.create_marketing = ctk.CTkCheckBox(
-            marketing_frame,
-            text="Also create marketing video (30-120 seconds)",
-            text_color="white"
-        )
-        self.create_marketing.pack(anchor="w")
+
+        # Check if marketing video is available
+        if self.license_manager.has_feature("ai_script_generation"):
+            self.create_marketing = ctk.CTkCheckBox(
+                marketing_frame,
+                text="Also create marketing video (30-120 seconds)",
+                text_color="white"
+            )
+            self.create_marketing.pack(anchor="w")
+        else:
+            # Show upgrade prompt
+            upgrade_label = ctk.CTkLabel(
+                marketing_frame,
+                text="Marketing videos available in Pro+ plans",
+                text_color=self.colors['text_yellow']
+            )
+            upgrade_label.pack(anchor="w")
         
         duration_frame = ctk.CTkFrame(marketing_frame, fg_color="transparent")
         duration_frame.pack(fill="x", pady=(10, 0))
@@ -941,9 +1089,25 @@ class TitanVideoApp:
     
     def generate_real_video(self):
         """Real video generation process - NO SIMULATIONS"""
+        # License check
+        if not self.license_manager.has_feature("basic_video_generation"):
+            messagebox.showerror("License Required",
+                               "Video generation requires an active license. Please upgrade your plan.")
+            return
+
+        # Check usage limits
+        limits = self.license_manager.get_limits()
+        remaining = self.license_manager.get_remaining_usage()
+
+        if remaining['videos_remaining'] <= 0:
+            messagebox.showerror("Usage Limit Reached",
+                               f"You've reached your monthly limit of {limits['videos_per_month']} videos.\n"
+                               "Please upgrade your plan or wait for the next billing cycle.")
+            return
+
         try:
             audio_path = self.audio_path.get()
-            
+
             # Collect metadata
             metadata = {
                 'title': self.song_title.get().strip(),
@@ -953,9 +1117,9 @@ class TitanVideoApp:
                 'copyright': self.copyright_info.get().strip() or f"© {datetime.now().year} {self.artist_name.get()}",
                 'year': self.release_year.get().strip() or str(datetime.now().year)
             }
-            
+
             style = self.video_style.get()
-            
+
             # Step 1: Real audio analysis
             self.update_progress("🎵 Analyzing audio with real AI...", 0.1)
             audio_info = self.video_generator.analyze_audio_real(audio_path)

@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TitanVideo - Choose Your Plan</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 0;
+        }
+
+        .pricing-card {
+            padding: 40px 30px;
+            text-align: center;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+
+        .pricing-card.basic {
+            background: #f8f9fa;
+        }
+
+        .pricing-card.pro {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .pricing-card.premium {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .pricing-card.enterprise {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+
+        .pricing-card.popular {
+            transform: scale(1.05);
+        }
+
+        .pricing-card.popular::after {
+            content: 'MOST POPULAR';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #ff6b6b;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 0 0 20px 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .plan-name {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .price {
+            font-size: 3rem;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+
+        .price span {
+            font-size: 1rem;
+            font-weight: normal;
+        }
+
+        .features {
+            list-style: none;
+            margin: 30px 0;
+        }
+
+        .features li {
+            padding: 8px 0;
+            position: relative;
+            padding-left: 25px;
+        }
+
+        .features li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .pricing-card.basic .features li::before {
+            color: #6c757d;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 15px 30px;
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .pricing-card.pro .btn {
+            background: white;
+            color: #667eea;
+        }
+
+        .pricing-card.premium .btn {
+            background: white;
+            color: #f093fb;
+        }
+
+        .pricing-card.enterprise .btn {
+            background: white;
+            color: #4facfe;
+        }
+
+        .footer {
+            background: #f8f9fa;
+            padding: 30px;
+            text-align: center;
+            color: #6c757d;
+        }
+
+        .footer a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .pricing-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .pricing-card {
+                margin: 10px;
+                border-radius: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Choose Your TitanVideo Plan</h1>
+            <p>Unlock the power of AI-driven music video creation</p>
+        </div>
+
+        <div class="pricing-grid">
+            <!-- Basic Plan -->
+            <div class="pricing-card basic">
+                <div class="plan-name">Basic</div>
+                <div class="price">$9.99<span>/month</span></div>
+                <ul class="features">
+                    <li>Basic AI video generation</li>
+                    <li>720p resolution</li>
+                    <li>Watermarked videos</li>
+                    <li>Basic audio analysis</li>
+                    <li>MP4 export</li>
+                    <li>5 videos/month</li>
+                    <li>Community support</li>
+                </ul>
+                <button class="btn" onclick="selectPlan('basic')">Get Started</button>
+            </div>
+
+            <!-- Pro Plan -->
+            <div class="pricing-card pro popular">
+                <div class="plan-name">Pro</div>
+                <div class="price">$19.99<span>/month</span></div>
+                <ul class="features">
+                    <li>Advanced AI video generation</li>
+                    <li>1080p resolution</li>
+                    <li>No watermark</li>
+                    <li>Advanced audio analysis</li>
+                    <li>Multiple format export</li>
+                    <li>AI lyrics generation</li>
+                    <li>50 videos/month</li>
+                    <li>Priority support</li>
+                    <li>Cloud storage</li>
+                </ul>
+                <button class="btn" onclick="selectPlan('pro')">Choose Pro</button>
+            </div>
+
+            <!-- Premium Plan -->
+            <div class="pricing-card premium">
+                <div class="plan-name">Premium</div>
+                <div class="price">$39.99<span>/month</span></div>
+                <ul class="features">
+                    <li>Premium AI video generation</li>
+                    <li>4K resolution</li>
+                    <li>No watermark</li>
+                    <li>Professional audio analysis</li>
+                    <li>All format export</li>
+                    <li>AI script generation</li>
+                    <li>Custom effects</li>
+                    <li>Batch processing</li>
+                    <li>API access</li>
+                    <li>500 videos/month</li>
+                    <li>Premium support</li>
+                </ul>
+                <button class="btn" onclick="selectPlan('premium')">Go Premium</button>
+            </div>
+
+            <!-- Enterprise Plan -->
+            <div class="pricing-card enterprise">
+                <div class="plan-name">Enterprise</div>
+                <div class="price">$99.99<span>/month</span></div>
+                <ul class="features">
+                    <li>Enterprise AI video generation</li>
+                    <li>Unlimited resolution (up to 8K)</li>
+                    <li>No watermark</li>
+                    <li>Enterprise audio analysis</li>
+                    <li>All format export</li>
+                    <li>AI Director mode</li>
+                    <li>Custom AI models</li>
+                    <li>White-label solution</li>
+                    <li>Unlimited API access</li>
+                    <li>Unlimited videos</li>
+                    <li>Dedicated support</li>
+                    <li>On-premise deployment</li>
+                </ul>
+                <button class="btn" onclick="selectPlan('enterprise')">Contact Sales</button>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>All plans include a 14-day free trial. Cancel anytime.</p>
+            <p>Need help choosing? <a href="mailto:support@titanvideo.ai">Contact our team</a></p>
+        </div>
+    </div>
+
+    <script>
+        function selectPlan(plan) {
+            // In a real app, this would redirect to payment processor
+            const urls = {
+                'basic': 'https://buy.stripe.com/basic-plan',
+                'pro': 'https://buy.stripe.com/pro-plan',
+                'premium': 'https://buy.stripe.com/premium-plan',
+                'enterprise': 'mailto:sales@titanvideo.ai?subject=Enterprise%20Inquiry'
+            };
+
+            if (plan === 'enterprise') {
+                window.location.href = urls[plan];
+            } else {
+                // Simulate payment flow
+                alert(`Redirecting to payment for ${plan} plan...`);
+                // window.location.href = urls[plan];
+            }
+        }
+
+        // Add some interactive effects
+        document.querySelectorAll('.pricing-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-10px) scale(1.02)';
+            });
+
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0) scale(1)';
+            });
+        });
+    </script>
+</body>
+</html>
